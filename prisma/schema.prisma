@@ -1,0 +1,82 @@
+// prisma/schema.prisma
+
+// Define the datasource for the database
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Define the generator for the client
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Tenant model
+model Tenant {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  users      User[]   @relation("TenantUsers")
+  products   Product[] @relation("TenantProducts")
+  sales      Sale[]   @relation("TenantSales")
+  expenses    Expense[] @relation("TenantExpenses")
+  sessions   Session[] @relation("TenantSessions")
+  auditLogs  AuditLog[] @relation("TenantAuditLogs")
+}
+
+// User model
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  password  String
+  tenantId  Int
+  tenant    Tenant @relation("TenantUsers", fields: [tenantId], references: [id])
+  sessions   Session[] @relation("UserSessions")
+}
+
+// Sale model
+model Sale {
+  id        Int     @id @default(autoincrement())
+  amount    Float
+  date      DateTime @default(now())
+  tenantId  Int
+  tenant    Tenant @relation("TenantSales", fields: [tenantId], references: [id])
+}
+
+// Expense model
+model Expense {
+  id        Int     @id @default(autoincrement())
+  amount    Float
+  date      DateTime @default(now())
+  tenantId  Int
+  tenant    Tenant @relation("TenantExpenses", fields: [tenantId], references: [id])
+}
+
+// Product model
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  price     Float
+  tenantId  Int
+  tenant    Tenant @relation("TenantProducts", fields: [tenantId], references: [id])
+}
+
+// Session model
+model Session {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  tenantId  Int
+  user      User @relation("UserSessions", fields: [userId], references: [id])
+  tenant    Tenant @relation("TenantSessions", fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// AuditLog model
+model AuditLog {
+  id        Int     @id @default(autoincrement())
+  action    String
+  timestamp DateTime  @default(now())
+  tenantId  Int
+  tenant    Tenant @relation("TenantAuditLogs", fields: [tenantId], references: [id])
+}
